@@ -5,6 +5,8 @@
 rake -T
 ```
 
+docker script is part of rake, but here it is
+
 ```sh
 docker run --name demystifying-postgres \
 -e POSTGRES_PASSWORD=password \
@@ -13,4 +15,3 @@ docker run --name demystifying-postgres \
 -p 5432:5432 \
 -d postgres
 ```
-
