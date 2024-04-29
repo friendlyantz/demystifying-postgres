@@ -3,6 +3,7 @@ require 'awesome_print'
 require 'pg'
 require 'progressbar'
 require 'colorize'
+require 'benchmark'
 
 ActiveRecord::Base.establish_connection(
   adapter: 'postgresql',
@@ -83,7 +84,7 @@ if gets.chomp == 'yes'
   # UnindexedCompany.destroy_all
   puts 'wipe complete. seeding'
 
-  range = ('AAAA'..'ZZZZ') # 456976
+  range = ('AAAA'..'ZZZZ') # 456976 records
   progressbar = ProgressBar.create(
     total: range.count,
     format: "%a %e %P% %b\u{15E7}%i RateOfChange: %r Processed: %c from %C",
@@ -118,20 +119,18 @@ if gets.chomp == 'yes'
   end
 end
 
-require 'benchmark'
+def benchmark(symbol = 'ZXUD')
+  time_unindexed = Benchmark.realtime do
+    UnindexedCompany.find_by(symbol:)
+  end
+  puts "Time to find in UnindexedCompany: #{time_unindexed * 1000} milliseconds".light_red
 
-symbol = 'ANTZ' # replace with the symbol you're looking for
+  time_indexed = Benchmark.realtime do
+    IndexedCompany.find_by(symbol:)
+  end
+  puts "Time to find in IndexedCompany: #{time_indexed * 1000} milliseconds".red
 
-time_unindexed = Benchmark.realtime do
-  UnindexedCompany.find_by(symbol:)
+  puts "IndexedCompany is #{(time_unindexed / time_indexed).round(2)} times faster than UnindexedCompany".green
 end
-puts "Time to find in UnindexedCompany: #{time_unindexed * 1000} milliseconds".light_red
-
-time_indexed = Benchmark.realtime do
-  IndexedCompany.find_by(symbol:)
-end
-puts "Time to find in IndexedCompany: #{time_indexed * 1000} milliseconds".red
-
-puts "IndexedCompany is #{(time_unindexed / time_indexed).round(2)} times faster than UnindexedCompany".green
 
 binding.irb
