@@ -1,15 +1,13 @@
 require 'active_record'
 require 'awesome_print'
 require 'pg'
-require 'faker'
-require 'faker/default/company'
 require 'progressbar'
 require 'colorize'
 
 ActiveRecord::Base.establish_connection(
   adapter: 'postgresql',
   database: 'index_test',
-  username: 'friendlyantz',
+  username: `whoami`.strip,
   password: 'password',
   host: 'localhost',
   port: 5432
@@ -17,7 +15,7 @@ ActiveRecord::Base.establish_connection(
 
 conn = PG.connect(
   dbname: 'postgres',
-  user: 'friendlyantz',
+  user: `whoami`.strip,
   password: 'password',
   host: 'localhost', # if you run in dockerm you need to connect via tcp and specify host/post, otherwise it uses unix socket
   port: 5432
@@ -122,7 +120,7 @@ end
 
 require 'benchmark'
 
-symbol = 'YourSymbol' # replace with the symbol you're looking for
+symbol = 'ANTZ' # replace with the symbol you're looking for
 
 time_unindexed = Benchmark.realtime do
   UnindexedCompany.find_by(symbol:)
