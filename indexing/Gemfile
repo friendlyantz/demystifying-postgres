@@ -1,14 +1,19 @@
 # frozen_string_literal: true
 
-source "https://rubygems.org"
+source 'https://rubygems.org'
 
+gem 'activerecord'
 
-gem "activerecord"
+gem 'awesome_print'
 
-gem "awesome_print"
+gem 'faker'
 
-gem "faker"
+gem 'pg', '~> 1.5'
 
-gem "pg", "~> 1.5"
+gem 'rubocop', '~> 1.63'
 
-gem "rubocop", "~> 1.63"
+gem 'progressbar'
+
+gem 'benchmark'
+
+gem 'colorize'
