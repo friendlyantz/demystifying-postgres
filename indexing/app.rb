@@ -18,7 +18,7 @@ conn = PG.connect(
   dbname: 'postgres',
   user: `whoami`.strip,
   password: 'password',
-  host: 'localhost', # if you run in dockerm you need to connect via tcp and specify host/post, otherwise it uses unix socket
+  host: 'localhost', # if you run in docker you need to connect via tcp and specify host/port, otherwise it uses unix socket
   port: 5432
 )
 
@@ -131,6 +131,28 @@ def benchmark(symbol = 'ZXUD')
   puts "Time to find in IndexedCompany: #{time_indexed * 1000} milliseconds".red
 
   puts "IndexedCompany is #{(time_unindexed / time_indexed).round(2)} times faster than UnindexedCompany".green
+
+  time_indexed = Benchmark.realtime do
+    IndexedCompany.where('indexed_companies.name ILIKE ?', "#{symbol} nAmE").take
+  end
+  puts "Time to find in IndexedCompany with ILIKE: #{time_indexed * 1000} milliseconds".yellow
+
+  time_unindexed = Benchmark.realtime do
+    UnindexedCompany.where('unindexed_companies.name ILIKE ?', "#{symbol} nAmE").take
+  end
+  puts "Time to find in UnindexedCompany with ILIKE: #{time_unindexed * 1000} milliseconds".light_yellow
+
+  time_indexed = Benchmark.realtime do
+    IndexedCompany.where('indexed_companies.name ILIKE ?', "%#{symbol.next}%").take
+  end
+  puts "Time to find in IndexedCompany with ILIKE and wildcard: #{time_indexed * 1000} milliseconds".yellow
+
+  time_unindexed = Benchmark.realtime do
+    UnindexedCompany.where('unindexed_companies.name ILIKE ?', "%#{symbol.next}%").take
+  end
+  puts "Time to find in UnindexedCompany with ILIKE and wildcard: #{time_unindexed * 1000} milliseconds".light_yellow
 end
+
+benchmark('ZXUD')
 
 binding.irb
