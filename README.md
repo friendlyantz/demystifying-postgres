@@ -1,6 +1,11 @@
 # Indexing
 
 ```sh
+# cd into dir
+rake -T
+```
+
+```sh
 docker run --name demystifying-postgres \
 -e POSTGRES_PASSWORD=password \
 -e POSTGRES_USER=$(whoami) \
@@ -8,3 +13,4 @@ docker run --name demystifying-postgres \
 -p 5432:5432 \
 -d postgres
 ```
+
