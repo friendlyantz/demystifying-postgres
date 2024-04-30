@@ -93,28 +93,30 @@ if gets.chomp == 'yes'
   )
 
   range.each_slice(10_000) do |symbols|
+    unindexed_companies = []
+    indexed_companies = []
+
+    symbols.each do |symbol|
+      name = symbol + 'name'
+      exchange = '1234'
+      description = symbol + 'description'
+
+      company = {
+        name: name,
+        exchange: exchange,
+        symbol: symbol,
+        description: description,
+      }
+
+      unindexed_companies << company
+      indexed_companies << company
+
+      progressbar.increment
+    end
+
     ActiveRecord::Base.transaction do
-      symbols.each do |symbol|
-        name = symbol + 'name'
-        exchange = '1234'
-        description = symbol + 'description'
-
-        UnindexedCompany.create!(
-          name:,
-          exchange:,
-          symbol:,
-          description:
-        )
-
-        IndexedCompany.create!(
-          name:,
-          exchange:,
-          symbol:,
-          description:
-        )
-
-        progressbar.increment
-      end
+      UnindexedCompany.insert_all(unindexed_companies)
+      IndexedCompany.insert_all(indexed_companies)
     end
   end
 end
