@@ -30,7 +30,10 @@ end
 class PartialIndexedCompany < ActiveRecord::Base
 end
 
-puts "do you want to create reset data? type 'yes'".red
+class GinIndexedCompany < ActiveRecord::Base
+end
+
+puts "do you want to reset DB? type 'yes'".red
 if gets.chomp == 'yes'
   begin
     conn.exec('DROP DATABASE IF EXISTS index_test')
@@ -91,9 +94,37 @@ if gets.chomp == 'yes'
       end
     end
   end
+
+  class EnablePgTrgmExtension < ActiveRecord::Migration[7.1]
+    def change
+      enable_extension 'pg_trgm'
+    end
+  end
+
+  EnablePgTrgmExtension.new.migrate(:up)
+
+  class CreateGinIndexedCompanies < ActiveRecord::Migration[7.1]
+    def change
+      return if ActiveRecord::Base.connection.table_exists?(:gin_indexed_companies)
+
+      disable_ddl_transaction
+
+      create_table :gin_indexed_companies do |t|
+        t.string :exchange, null: false
+        t.string :symbol, null: false
+        t.string :name, null: false
+        t.text :description, null: false
+        t.timestamps
+
+        t.index :name, opclass: :gin_trgm_ops, using: :gin, algorithm: :concurrently, name: 'index_on_name_trgm'
+      end
+    end
+  end
+
   CreateIndexedCompanies.new.migrate(:up)
   CreateUnindexedCompanies.new.migrate(:up)
   CreatePartialIndexedCompanies.new.migrate(:up)
+  CreateGinIndexedCompanies.new.migrate(:up)
 
   puts 'wiping data...'
   ActiveRecord::Base.connection.execute('TRUNCATE unindexed_companies RESTART IDENTITY CASCADE')
@@ -140,6 +171,7 @@ if gets.chomp == 'yes'
       UnindexedCompany.insert_all(unindexed_companies)
       IndexedCompany.insert_all(indexed_companies)
       PartialIndexedCompany.insert_all(indexed_companies)
+      GinIndexedCompany.insert_all(indexed_companies)
     end
   end
 end
@@ -162,6 +194,7 @@ def benchmark(symbol = 'ZXUD')
   end
   puts "Time to find by symbol in PartialIndexedCompany: #{time_indexed * 1000} milliseconds".purple
 
+  puts '=======  ILIKE by Name ========='.yellow
   # ILIKE
   time_unindexed = Benchmark.realtime do
     UnindexedCompany.where('unindexed_companies.name ILIKE ?', "#{symbol.downcase}").take
@@ -169,21 +202,38 @@ def benchmark(symbol = 'ZXUD')
   puts "Time to find in UnindexedCompany with ILIKE no wildcard: #{time_unindexed * 1000} milliseconds".yellow
 
   time_indexed = Benchmark.realtime do
-    PartialIndexedCompany.where('partial_indexed_companies.symbol ILIKE ?', "#{symbol.downcase}").take
+    PartialIndexedCompany.where('partial_indexed_companies.name ILIKE ?', "#{symbol.downcase}").take
   end
   puts "Time to find in PartialIndexedCompany with ILIKE no wildcard: #{time_indexed * 1000} milliseconds".purple
 
-  # ILIKE with wildcard on BOTH sides
   time_indexed = Benchmark.realtime do
-    UnindexedCompany.where('unindexed_companies.name ILIKE ?', "%#{symbol.next}%").take
+    GinIndexedCompany.where('gin_indexed_companies.name ILIKE ?', "#{symbol.downcase}").take
+  end
+  puts "Time to find in GinIndexedCompany with ILIKE no wildcard: #{time_indexed * 1000} milliseconds".light_blue
+
+  # ILIKE with wildcard on BOTH sides
+  puts '=======  ILIKE by name ========='.yellow
+  time_indexed = Benchmark.realtime do
+    UnindexedCompany.where('unindexed_companies.name ILIKE ?', "%#{symbol}%").take
   end
   puts "Time to find in UnindexedCompany with ILIKE and wildcard on BOTH sides: #{time_indexed * 1000} milliseconds".light_yellow
 
+  time_indexed = Benchmark.realtime do
+    GinIndexedCompany.where('gin_indexed_companies.name ILIKE ?', "%#{symbol}%").take
+  end
+  puts "Time to find in GinIndexedCompany with ILIKE and wildcard on BOTH sides: #{time_indexed * 1000} milliseconds".light_blue
+
+  puts '=======  ILIKE by name ========='.yellow
   # ILIKE with wildcard on the RIGHT side
   time_unindexed = Benchmark.realtime do
-    UnindexedCompany.where('unindexed_companies.name ILIKE ?', "#{symbol.next}%").take
+    UnindexedCompany.where('unindexed_companies.name ILIKE ?', "#{symbol}%").take
   end
   puts "Time to find in UnindexedCompany with ILIKE and wildcard ONLY on the RIGHT side: #{time_unindexed * 1000} milliseconds".light_yellow
+
+  time_indexed = Benchmark.realtime do
+    GinIndexedCompany.where('gin_indexed_companies.name ILIKE ?', "#{symbol}%").take
+  end
+  puts "Time to find in GinIndexedCompany with ILIKE and wildcard ONLY on the RIGHT side: #{time_indexed * 1000} milliseconds".light_blue
 end
 
 benchmark('ZXUD')

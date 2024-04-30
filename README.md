@@ -34,3 +34,53 @@ Time to find in UnindexedCompany with ILIKE and wildcard ONLY on the RIGHT side:
 ```
 
 Also I noted hitting Partially indexed table second time with the same query (outside index range) was 100x faster, while others did not change (edited)
+
+---
+
+## GIN index for ILIKE
+
+GIN/GIST indexes together with pg_tgrm can
+sometimes be used for LIKE and ILIKE, but query
+performance is unpredictable when user-generated
+input is presented.
+
+yet it was faster 100x than unindexed table
+
+```
+Time to find in UnindexedCompany with ILIKE no wildcard: 197.44199997512624 milliseconds
+Time to find in GinIndexedCompany with ILIKE no wildcard: 3.2500000088475645 milliseconds
+=======  ILIKE by name =========
+Time to find in UnindexedCompany with ILIKE and wildcard on BOTH sides: 216.9819999835454 milliseconds
+Time to find in GinIndexedCompany with ILIKE and wildcard on BOTH sides: 1.5279999934136868 milliseconds
+=======  ILIKE by name =========
+Time to find in UnindexedCompany with ILIKE and wildcard ONLY on the RIGHT side: 196.53300003847107 milliseconds
+Time to find in GinIndexedCompany with ILIKE and wildcard ONLY on the RIGHT side: 1.340000017080456 milliseconds
+```
+
+```ruby
+  class EnablePgTrgmExtension < ActiveRecord::Migration[7.1]
+    def change
+      enable_extension 'pg_trgm'
+    end
+  end
+
+  EnablePgTrgmExtension.new.migrate(:up)
+
+  class CreateGinIndexedCompanies < ActiveRecord::Migration[7.1]
+    def change
+      return if ActiveRecord::Base.connection.table_exists?(:gin_indexed_companies)
+
+      disable_ddl_transaction
+
+      create_table :gin_indexed_companies do |t|
+        t.string :exchange, null: false
+        t.string :symbol, null: false
+        t.string :name, null: false
+        t.text :description, null: false
+        t.timestamps
+
+        t.index :name, opclass: :gin_trgm_ops, using: :gin, algorithm: :concurrently, name: 'index_on_name_trgm'
+      end
+    end
+  end
+```
