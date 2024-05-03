@@ -33,7 +33,7 @@ end
 class GinIndexedCompany < ActiveRecord::Base
 end
 
-puts "do you want to reset DB? type 'yes'".red
+puts "do you want to reset DB? type 'yes' (RECOMMENDED to do it regularly to reset cache)".red
 if gets.chomp == 'yes'
   begin
     conn.exec('DROP DATABASE IF EXISTS index_test')
@@ -130,8 +130,8 @@ if gets.chomp == 'yes'
   ActiveRecord::Base.connection.execute('TRUNCATE unindexed_companies RESTART IDENTITY CASCADE')
   ActiveRecord::Base.connection.execute('TRUNCATE indexed_companies RESTART IDENTITY CASCADE')
   ActiveRecord::Base.connection.execute('TRUNCATE partial_indexed_companies RESTART IDENTITY CASCADE')
-  # these are too slow, use the above instead
-  # IndexedCompany.destroy_all
+  ActiveRecord::Base.connection.execute('TRUNCATE gin_indexed_companies RESTART IDENTITY CASCADE')
+  # IndexedCompany.destroy_all # these are too slow, use the above instead
   puts 'wipe complete. seeding'
 
   require 'faker'
@@ -176,68 +176,58 @@ if gets.chomp == 'yes'
   end
 end
 
-def benchmark(symbol = 'ZXUD')
-  time_unindexed = Benchmark.realtime do
-    UnindexedCompany.find_by(symbol:)
-  end
-  puts "Time to find by symbol in UnindexedCompany: #{time_unindexed * 1000} milliseconds".light_yellow
+def benchmark_like(symbol = 'ZXUD')
+  time_unindexed = Benchmark.realtime { UnindexedCompany.find_by(symbol:) }
+  puts "Time to find by symbol in UnindexedCompany: #{time_unindexed * 1000} milliseconds".light_red
 
-  time_indexed = Benchmark.realtime do
-    IndexedCompany.find_by(symbol:)
-  end
+  time_indexed = Benchmark.realtime { IndexedCompany.find_by(symbol:) }
   puts "Time to find by symbol in IndexedCompany: #{time_indexed * 1000} milliseconds".red
 
   puts "IndexedCompany is #{(time_unindexed / time_indexed).round(2)} times faster than UnindexedCompany".green
 
-  time_indexed = Benchmark.realtime do
-    PartialIndexedCompany.find_by(symbol:)
-  end
-  puts "Time to find by symbol in PartialIndexedCompany: #{time_indexed * 1000} milliseconds".purple
+  time_partial_indexed = Benchmark.realtime { PartialIndexedCompany.find_by(symbol:) }
+  puts "Time to find by symbol in PartialIndexedCompany: #{time_partial_indexed * 1000} milliseconds".red
 
-  puts '=======  ILIKE by Name ========='.yellow
-  # ILIKE
-  time_unindexed = Benchmark.realtime do
-    UnindexedCompany.where('unindexed_companies.name ILIKE ?', "#{symbol.downcase}").take
-  end
-  puts "Time to find in UnindexedCompany with ILIKE no wildcard: #{time_unindexed * 1000} milliseconds".yellow
+  puts "Partial index was slower than full index by #{(time_partial_indexed / time_indexed).round(2)} times".light_green
 
-  time_indexed = Benchmark.realtime do
-    PartialIndexedCompany.where('partial_indexed_companies.name ILIKE ?', "#{symbol.downcase}").take
-  end
-  puts "Time to find in PartialIndexedCompany with ILIKE no wildcard: #{time_indexed * 1000} milliseconds".purple
-
-  time_indexed = Benchmark.realtime do
-    GinIndexedCompany.where('gin_indexed_companies.name ILIKE ?', "#{symbol.downcase}").take
-  end
-  puts "Time to find in GinIndexedCompany with ILIKE no wildcard: #{time_indexed * 1000} milliseconds".light_blue
-
-  # ILIKE with wildcard on BOTH sides
-  puts '=======  ILIKE by name ========='.yellow
-  time_indexed = Benchmark.realtime do
-    UnindexedCompany.where('unindexed_companies.name ILIKE ?', "%#{symbol}%").take
-  end
-  puts "Time to find in UnindexedCompany with ILIKE and wildcard on BOTH sides: #{time_indexed * 1000} milliseconds".light_yellow
-
-  time_indexed = Benchmark.realtime do
-    GinIndexedCompany.where('gin_indexed_companies.name ILIKE ?', "%#{symbol}%").take
-  end
-  puts "Time to find in GinIndexedCompany with ILIKE and wildcard on BOTH sides: #{time_indexed * 1000} milliseconds".light_blue
-
-  puts '=======  ILIKE by name ========='.yellow
-  # ILIKE with wildcard on the RIGHT side
-  time_unindexed = Benchmark.realtime do
-    UnindexedCompany.where('unindexed_companies.name ILIKE ?', "#{symbol}%").take
-  end
-  puts "Time to find in UnindexedCompany with ILIKE and wildcard ONLY on the RIGHT side: #{time_unindexed * 1000} milliseconds".light_yellow
-
-  time_indexed = Benchmark.realtime do
-    GinIndexedCompany.where('gin_indexed_companies.name ILIKE ?', "#{symbol}%").take
-  end
-  puts "Time to find in GinIndexedCompany with ILIKE and wildcard ONLY on the RIGHT side: #{time_indexed * 1000} milliseconds".light_blue
+  puts '='.red * 50
 end
 
-benchmark('ZXUD')
-puts '---------------------------------'
-benchmark('DITO')
+def measure(code)
+  query = -> { eval(code) }
+  # take to avoid loading all records, but it increases time, not sure why,
+  # as it is supposed to be similar to limi(1),
+  # but applicable to ruby arrays as well as AR relations
+  time_indexed = Benchmark.realtime { query.call.take }
+  puts code
+  puts query.call.to_sql
+  puts "time used: #{(time_indexed * 1000).round(2)} milliseconds".light_blue
+  puts '-' * 50
+end
 
+def benchmark_ilike(name = 'Friendlyantz')
+  puts ' ILIKE no Wildcard'.light_green
+  measure "UnindexedCompany.where('unindexed_companies.name ILIKE ?', \"#{name}\")"
+  measure "PartialIndexedCompany.where('partial_indexed_companies.name ILIKE ?', \"#{name}\")"
+  measure "GinIndexedCompany.where('gin_indexed_companies.name ILIKE ?', \"#{name}\")"
+
+  puts ' ILIKE with wildcard on BOTH sides'.light_green
+  measure "UnindexedCompany.where('unindexed_companies.name ILIKE ?', \"%#{name}%\")"
+  measure "GinIndexedCompany.where('gin_indexed_companies.name ILIKE ?', \"%#{name}%\")"
+
+  puts '  =======  ILIKE by name  with wildcard on the right ========='.light_green
+  measure "UnindexedCompany.where('unindexed_companies.name ILIKE ?', \"#{name}%\")"
+  measure("GinIndexedCompany.where('gin_indexed_companies.name ILIKE ?', \"#{name}%\")")
+
+  puts IndexedCompany.where('indexed_companies.name ILIKE ?', "%#{name}%").take.inspect
+end
+
+puts '--------- outside partial index indexed ------------------------'
+benchmark_like('ZXUD')
+puts '--------- within partial index indexed ------------------------'
+benchmark_like('DITO')
+
+benchmark_ilike('Non existent record forcind to do full scan') # non-existent reocrd
+
+GinIndexedCompany.where('gin_indexed_companies.name ILIKE ?', '%Frane%').take
 binding.irb

@@ -1,5 +1,7 @@
 # Indexing
 
+## Installation
+
 ```sh
 # cd into dir
 rake -T
@@ -16,7 +18,15 @@ docker run --name demystifying-postgres \
 -d postgres
 ```
 
-Some findings:
+## connect via `psql`
+
+```sh
+psql -h localhost -p 5432 -U friendlyantz -d index_test
+# password: password
+```
+
+## Some findings
+
 ILIKE with wildcard on both sides vs only on the right side:  little difference. both sides is slower 10-20%
 wildcard provided little, to no benefit to ILIKE, however if data after wildcard was more or less identical, it was magnitudes faster. i.e. ABDCSSA-predictable_string_replaced_by_wildcard
 Partial index scan (~20%) - provided substantial improvement too, perhaps proportional to the size of the index, but not sure.
@@ -47,6 +57,7 @@ input is presented.
 yet it was faster 100x than unindexed table
 
 ```
+
 Time to find in UnindexedCompany with ILIKE no wildcard: 197.44199997512624 milliseconds
 Time to find in GinIndexedCompany with ILIKE no wildcard: 3.2500000088475645 milliseconds
 =======  ILIKE by name =========
@@ -55,6 +66,7 @@ Time to find in GinIndexedCompany with ILIKE and wildcard on BOTH sides: 1.52799
 =======  ILIKE by name =========
 Time to find in UnindexedCompany with ILIKE and wildcard ONLY on the RIGHT side: 196.53300003847107 milliseconds
 Time to find in GinIndexedCompany with ILIKE and wildcard ONLY on the RIGHT side: 1.340000017080456 milliseconds
+
 ```
 
 ```ruby
@@ -84,3 +96,8 @@ Time to find in GinIndexedCompany with ILIKE and wildcard ONLY on the RIGHT side
     end
   end
 ```
+
+## Triagram
+
+```sql
+SELECT show_trgm('Apple'),
