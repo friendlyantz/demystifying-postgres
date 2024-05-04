@@ -27,3 +27,11 @@ group :development do
   # gem "spring"
 end
 
+
+gem "pg_search", "~> 2.3"
+
+gem "faker", "~> 3.3"
+
+gem "progressbar", "~> 1.13"
+
+gem "colorize", "~> 1.1"
