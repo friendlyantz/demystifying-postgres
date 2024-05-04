@@ -50,7 +50,8 @@ CREATE TABLE public.companies (
     exchange character varying,
     description text,
     created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
+    updated_at timestamp(6) without time zone NOT NULL,
+    searchable tsvector GENERATED ALWAYS AS ((setweight(to_tsvector('english'::regconfig, (COALESCE(name, ''::character varying))::text), 'A'::"char") || setweight(to_tsvector('english'::regconfig, COALESCE(description, ''::text)), 'B'::"char"))) STORED
 );
 
 
@@ -351,5 +352,6 @@ CREATE UNIQUE INDEX index_on_symbol ON public.partial_indexed_companies USING bt
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20240504074651'),
 ('20240504050321');
 
