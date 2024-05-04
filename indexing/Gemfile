@@ -17,3 +17,5 @@ gem 'progressbar'
 gem 'benchmark'
 
 gem 'colorize'
+
+gem "pg_search", "~> 2.3"

@@ -4,6 +4,7 @@ require 'pg'
 require 'progressbar'
 require 'colorize'
 require 'benchmark'
+require 'pg_search'
 
 ActiveRecord::Base.establish_connection(
   adapter: 'postgresql',
@@ -21,7 +22,13 @@ conn = PG.connect(
   host: 'localhost', # if you run in docker you need to connect via tcp and specify host/port, otherwise it uses unix socket
   port: 5432
 )
+
 class UnindexedCompany < ActiveRecord::Base
+  include PgSearch::Model
+  # pg_search_scope :search, against: :description # unscoped / no weights
+  pg_search_scope :search,
+                  against: { name: 'A', description: 'B' }, # can be 'A', 'B', 'C' or 'D'
+                  using: { tsearch: { dictionary: 'english' } }
 end
 
 class IndexedCompany < ActiveRecord::Base
@@ -172,6 +179,11 @@ if gets.chomp == 'yes'
       GinIndexedCompany.insert_all(companies)
     end
   end
+
+  UnindexedCompany.create!(name: 'Melbourne', exchange: '1.00%', symbol: 'MELBS',
+                           description: 'the weather in Melbourne is known for its variability as well as predictability')
+  UnindexedCompany.create!(name: 'Auckland', exchange: '0.10%', symbol: 'AUCKL',
+                           description: 'the variable weather in Auckland is not as predictable as in Melbourne')
 end
 
 def benchmark_like(symbol = 'ZXUD')
@@ -231,4 +243,5 @@ benchmark_ilike('Non existent record forcind to do full scan') # non-existent re
 benchmark_ilike('short string') # non-existent reocrd
 benchmark_ilike('Will') # non-existent reocrd
 
+ap UnindexedCompany.search('Melbourne predictable')
 binding.irb
