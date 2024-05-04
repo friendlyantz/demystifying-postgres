@@ -19,6 +19,10 @@ default: &default
   # https://guides.rubyonrails.org/configuring.html#database-pooling
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
   database: index_test
+  username: <%= `whoami`.strip %>
+  password: password
+  host: localhost
+  port: 5432
 
 development:
   <<: *default
@@ -28,7 +32,6 @@ development:
   # To create additional roles in PostgreSQL see `$ createuser --help`.
   # When left blank, PostgreSQL will use the default role. This is
   # the same name as the operating system user running Rails.
-  username: <%= `whoami`.strip %>
 
   # The password associated with the PostgreSQL role (username).
   password: password
@@ -56,7 +59,7 @@ development:
 # Do not set this db to the same as development or production.
 test:
   <<: *default
-  database: rails_minimal_test
+  # database: rails_minimal_test
 
 # As with config/credentials.yml, you never want to store sensitive information,
 # like your database password, in your source code. If your source code is
@@ -80,6 +83,6 @@ test:
 #
 production:
   <<: *default
-  database: rails_minimal_production
+  # database: rails_minimal_production
   username: rails_minimal
   password: <%= ENV["RAILS_MINIMAL_DATABASE_PASSWORD"] %>

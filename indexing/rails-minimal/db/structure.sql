@@ -75,108 +75,6 @@ ALTER SEQUENCE public.companies_id_seq OWNED BY public.companies.id;
 
 
 --
--- Name: gin_indexed_companies; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.gin_indexed_companies (
-    id bigint NOT NULL,
-    exchange character varying NOT NULL,
-    symbol character varying NOT NULL,
-    name character varying NOT NULL,
-    description text NOT NULL,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
-);
-
-
---
--- Name: gin_indexed_companies_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.gin_indexed_companies_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: gin_indexed_companies_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.gin_indexed_companies_id_seq OWNED BY public.gin_indexed_companies.id;
-
-
---
--- Name: indexed_companies; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.indexed_companies (
-    id bigint NOT NULL,
-    exchange character varying NOT NULL,
-    symbol character varying NOT NULL,
-    name character varying NOT NULL,
-    description text NOT NULL,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
-);
-
-
---
--- Name: indexed_companies_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.indexed_companies_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: indexed_companies_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.indexed_companies_id_seq OWNED BY public.indexed_companies.id;
-
-
---
--- Name: partial_indexed_companies; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.partial_indexed_companies (
-    id bigint NOT NULL,
-    exchange character varying NOT NULL,
-    symbol character varying NOT NULL,
-    name character varying NOT NULL,
-    description text NOT NULL,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
-);
-
-
---
--- Name: partial_indexed_companies_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.partial_indexed_companies_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: partial_indexed_companies_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.partial_indexed_companies_id_seq OWNED BY public.partial_indexed_companies.id;
-
-
---
 -- Name: schema_migrations; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -186,72 +84,10 @@ CREATE TABLE public.schema_migrations (
 
 
 --
--- Name: unindexed_companies; Type: TABLE; Schema: public; Owner: -
---
-
-CREATE TABLE public.unindexed_companies (
-    id bigint NOT NULL,
-    exchange character varying NOT NULL,
-    symbol character varying NOT NULL,
-    name character varying NOT NULL,
-    description text NOT NULL,
-    created_at timestamp(6) without time zone NOT NULL,
-    updated_at timestamp(6) without time zone NOT NULL
-);
-
-
---
--- Name: unindexed_companies_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE public.unindexed_companies_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- Name: unindexed_companies_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE public.unindexed_companies_id_seq OWNED BY public.unindexed_companies.id;
-
-
---
 -- Name: companies id; Type: DEFAULT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.companies ALTER COLUMN id SET DEFAULT nextval('public.companies_id_seq'::regclass);
-
-
---
--- Name: gin_indexed_companies id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.gin_indexed_companies ALTER COLUMN id SET DEFAULT nextval('public.gin_indexed_companies_id_seq'::regclass);
-
-
---
--- Name: indexed_companies id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.indexed_companies ALTER COLUMN id SET DEFAULT nextval('public.indexed_companies_id_seq'::regclass);
-
-
---
--- Name: partial_indexed_companies id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.partial_indexed_companies ALTER COLUMN id SET DEFAULT nextval('public.partial_indexed_companies_id_seq'::regclass);
-
-
---
--- Name: unindexed_companies id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.unindexed_companies ALTER COLUMN id SET DEFAULT nextval('public.unindexed_companies_id_seq'::regclass);
 
 
 --
@@ -271,30 +107,6 @@ ALTER TABLE ONLY public.companies
 
 
 --
--- Name: gin_indexed_companies gin_indexed_companies_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.gin_indexed_companies
-    ADD CONSTRAINT gin_indexed_companies_pkey PRIMARY KEY (id);
-
-
---
--- Name: indexed_companies indexed_companies_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.indexed_companies
-    ADD CONSTRAINT indexed_companies_pkey PRIMARY KEY (id);
-
-
---
--- Name: partial_indexed_companies partial_indexed_companies_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.partial_indexed_companies
-    ADD CONSTRAINT partial_indexed_companies_pkey PRIMARY KEY (id);
-
-
---
 -- Name: schema_migrations schema_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -303,46 +115,10 @@ ALTER TABLE ONLY public.schema_migrations
 
 
 --
--- Name: unindexed_companies unindexed_companies_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: index_companies_on_searchable; Type: INDEX; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY public.unindexed_companies
-    ADD CONSTRAINT unindexed_companies_pkey PRIMARY KEY (id);
-
-
---
--- Name: index_indexed_companies_on_exchange_symbol; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_indexed_companies_on_exchange_symbol ON public.indexed_companies USING btree (exchange, symbol);
-
-
---
--- Name: index_indexed_companies_on_symbol; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_indexed_companies_on_symbol ON public.indexed_companies USING btree (symbol);
-
-
---
--- Name: index_on_exchange_and_symbol; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_on_exchange_and_symbol ON public.partial_indexed_companies USING btree (exchange, symbol) WHERE ((symbol)::text <= 'E'::text);
-
-
---
--- Name: index_on_name_trgm; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX index_on_name_trgm ON public.gin_indexed_companies USING gin (name public.gin_trgm_ops);
-
-
---
--- Name: index_on_symbol; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE UNIQUE INDEX index_on_symbol ON public.partial_indexed_companies USING btree (symbol) WHERE ((symbol)::text <= 'E'::text);
+CREATE INDEX index_companies_on_searchable ON public.companies USING gin (searchable);
 
 
 --
@@ -352,6 +128,8 @@ CREATE UNIQUE INDEX index_on_symbol ON public.partial_indexed_companies USING bt
 SET search_path TO "$user", public;
 
 INSERT INTO "schema_migrations" (version) VALUES
+('20240504085325'),
+('20240504080109'),
 ('20240504074651'),
 ('20240504050321');
 
