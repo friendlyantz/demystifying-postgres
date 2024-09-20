@@ -1,0 +1,24 @@
+require 'active_record'
+
+task default: :instructions
+
+task :instructions do
+  sh 'rake -T'
+end
+
+desc 'create postgres db in docker'
+task :install_pg do
+  sh <<~SHELL
+    docker run --name demystifying-postgres \
+    -e POSTGRES_PASSWORD=password \
+    -e POSTGRES_USER=$(whoami) \
+    -e POSTGRES_DB=effective_indexing \
+    -p 5432:5432 \
+    -d postgres
+  SHELL
+end
+
+desc 'Run the app'
+task :run do
+  sh 'bundle exec ruby app.rb'
+end

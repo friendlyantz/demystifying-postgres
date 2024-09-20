@@ -1,4 +1,3 @@
-# Indexing
 
 ## Installation
 
@@ -20,10 +19,21 @@ docker run --name demystifying-postgres \
 
 ## connect via `psql`
 
+
 ```sh
 psql -h localhost -p 5432 -U friendlyantz -d index_test
 # password: password
 ```
+
+or
+
+```sh
+createdb -h localhost -U friendlyantz db_name
+```
+
+---
+
+# Search
 
 ## Some findings
 
@@ -101,3 +111,10 @@ Time to find in GinIndexedCompany with ILIKE and wildcard ONLY on the RIGHT side
 
 ```sql
 SELECT show_trgm('Apple'),
+```
+
+---
+
+# Indexing
+
+
