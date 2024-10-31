@@ -25,7 +25,8 @@ if gets.chomp == 'y'
     SQL
   )
   seed_query_and_add_index_on_user_id = <<~SQL
-    INSERT INTO product_data(user_id, organization_id, data) SELECT user_id, gen_random_uuid()
+    INSERT INTO product_data(user_id, organization_id, data)
+    SELECT user_id, gen_random_uuid()
     AS organization_id, jsonb_build_object('subscribed', random() > 0.5)
     AS data FROM generate_series(1, 100000) user_id;
     CREATE INDEX ON product_data(user_id);

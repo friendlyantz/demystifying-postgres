@@ -22,3 +22,8 @@ desc 'Run the app'
 task :run do
   sh 'bundle exec ruby app.rb'
 end
+
+desc 'connect via psql'
+task :psql do
+  sh 'psql -h localhost -p 5432 -U friendlyantz -d index_test'
+end

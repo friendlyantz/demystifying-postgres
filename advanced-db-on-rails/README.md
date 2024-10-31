@@ -1,3 +1,14 @@
+# Run SQL from rails console
+
+```ruby
+connection = ActiveRecord::Base.connection
+sql = 'SELECT * FROM employees'
+esql = "EXPLAIN(ANALYZE, VERBOSE, BUFFERS) #{sql}"
+connection.exec_query(esql)
+```
+
+---
+
 not all method user Method chaining
  `Employee.average(:salary)`
 execute the query and return a result, while other methods implement Method Chaining,
@@ -33,6 +44,7 @@ BCE employee, and how much this employee‘s
 salary differs from the average?
 
 ```ruby
+
 avg_sql = Employee.select('avg(salary)').to_sql
 
 Employee.select(
@@ -63,6 +75,6 @@ review score given across all our managers.
 (average of those averages) =>  aggregate of aggregates
 
 ```ruby
-E
+
 
 ```
